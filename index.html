@@ -89,32 +89,32 @@
             <p>出牌时间: <span id="time1">0</span> 秒</p>
             <p>超时次数: <span id="timeout1">0</span></p>
             <p>总出牌时间: <span id="total-time1">0</span> 秒</p>
-            <button onclick="stopTimer(0)">出牌结束</button>
-            <button onclick="startTimerOnPong(0)">碰牌</button>
+            <button onclick="stopTimer(0); sendAction('stop', 0)">出牌结束</button>
+            <button onclick="startTimerOnPong(0); sendAction('pong', 0)">碰牌</button>
         </div>
         <div class="player" id="player2" draggable="true">
             <h2>玩家 2</h2>
             <p>出牌时间: <span id="time2">0</span> 秒</p>
             <p>超时次数: <span id="timeout2">0</span></p>
             <p>总出牌时间: <span id="total-time2">0</span> 秒</p>
-            <button onclick="stopTimer(1)">出牌结束</button>
-            <button onclick="startTimerOnPong(1)">碰牌</button>
+            <button onclick="stopTimer(1); sendAction('stop', 1)">出牌结束</button>
+            <button onclick="startTimerOnPong(1); sendAction('pong', 1)">碰牌</button>
         </div>
         <div class="player" id="player3" draggable="true">
             <h2>玩家 3</h2>
             <p>出牌时间: <span id="time3">0</span> 秒</p>
             <p>超时次数: <span id="timeout3">0</span></p>
             <p>总出牌时间: <span id="total-time3">0</span> 秒</p>
-            <button onclick="stopTimer(2)">出牌结束</button>
-            <button onclick="startTimerOnPong(2)">碰牌</button>
+            <button onclick="stopTimer(2); sendAction('stop', 2)">出牌结束</button>
+            <button onclick="startTimerOnPong(2); sendAction('pong', 2)">碰牌</button>
         </div>
         <div class="player" id="player4" draggable="true">
             <h2>玩家 4</h2>
             <p>出牌时间: <span id="time4">0</span> 秒</p>
             <p>超时次数: <span id="timeout4">0</span></p>
             <p>总出牌时间: <span id="total-time4">0</span> 秒</p>
-            <button onclick="stopTimer(3)">出牌结束</button>
-            <button onclick="startTimerOnPong(3)">碰牌</button>
+            <button onclick="stopTimer(3); sendAction('stop', 3)">出牌结束</button>
+            <button onclick="startTimerOnPong(3); sendAction('pong', 3)">碰牌</button>
         </div>
     </div>
     <script>
@@ -211,9 +211,30 @@
             e.target.classList.remove('dragging');
         });
 
+        // 连接 WebSocket 服务器
+        const socket = new WebSocket('ws://localhost:8080');
+
+        socket.addEventListener('open', () => {
+            console.log('Connected to the server');
+        });
+
+        socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            if (data.action === 'stop') {
+                stopTimer(data.playerIndex);
+            } else if (data.action === 'pong') {
+                startTimerOnPong(data.playerIndex);
+            }
+        });
+
+        function sendAction(action, playerIndex) {
+            const message = JSON.stringify({ action, playerIndex });
+            socket.send(message);
+        }
+
         // 游戏开始，玩家 1 先出牌
         startTimer(0);
     </script>
 </body>
 
-</html>    
+</html>
