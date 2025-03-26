@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四人联机麻将出牌计时器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        #pause-button {
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #pause-button:hover {
+            background-color: #0056b3;
+        }
+
+        .players {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .player {
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 250px;
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .player.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .player h2 {
+            margin-bottom: 10px;
+        }
+
+        .player p {
+            margin: 5px 0;
+        }
+
+        .player button {
+            margin-top: 10px;
+            padding: 12px 20px;
+            font-size: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .player button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>四人联机麻将出牌计时器</h1>
+    <button id="pause-button">总暂停</button>
+    <div class="players" id="players-container">
+        <div class="player" id="player1" draggable="true">
+            <h2>玩家 1</h2>
+            <p>出牌时间: <span id="time1">0</span> 秒</p>
+            <p>超时次数: <span id="timeout1">0</span></p>
+            <p>总出牌时间: <span id="total-time1">0</span> 秒</p>
+            <button onclick="stopTimer(0)">出牌结束</button>
+            <button onclick="startTimerOnPong(0)">碰牌</button>
+        </div>
+        <div class="player" id="player2" draggable="true">
+            <h2>玩家 2</h2>
+            <p>出牌时间: <span id="time2">0</span> 秒</p>
+            <p>超时次数: <span id="timeout2">0</span></p>
+            <p>总出牌时间: <span id="total-time2">0</span> 秒</p>
+            <button onclick="stopTimer(1)">出牌结束</button>
+            <button onclick="startTimerOnPong(1)">碰牌</button>
+        </div>
+        <div class="player" id="player3" draggable="true">
+            <h2>玩家 3</h2>
+            <p>出牌时间: <span id="time3">0</span> 秒</p>
+            <p>超时次数: <span id="timeout3">0</span></p>
+            <p>总出牌时间: <span id="total-time3">0</span> 秒</p>
+            <button onclick="stopTimer(2)">出牌结束</button>
+            <button onclick="startTimerOnPong(2)">碰牌</button>
+        </div>
+        <div class="player" id="player4" draggable="true">
+            <h2>玩家 4</h2>
+            <p>出牌时间: <span id="time4">0</span> 秒</p>
+            <p>超时次数: <span id="timeout4">0</span></p>
+            <p>总出牌时间: <span id="total-time4">0</span> 秒</p>
+            <button onclick="stopTimer(3)">出牌结束</button>
+            <button onclick="startTimerOnPong(3)">碰牌</button>
+        </div>
+    </div>
+    <script>
+        const timers = [null, null, null, null];
+        const times = [0, 0, 0, 0];
+        const timeouts = [0, 0, 0, 0];
+        const totalTimes = [0, 0, 0, 0];
+        let isPaused = false;
+        let currentPlayer = 0;
+        let draggedElement;
+
+        const pauseButton = document.getElementById('pause-button');
+        pauseButton.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseButton.textContent = isPaused ? '恢复计时' : '总暂停';
+            if (isPaused) {
+                timers.forEach((timer) => {
+                    if (timer) {
+                        clearInterval(timer);
+                    }
+                });
+            } else {
+                if (timers[currentPlayer] === null) {
+                    startTimer(currentPlayer);
+                }
+            }
+        });
+
+        function startTimer(playerIndex) {
+            if (isPaused) return;
+            if (timers[playerIndex]) {
+                clearInterval(timers[playerIndex]);
+            }
+            times[playerIndex] = 0;
+            document.getElementById(`time${playerIndex + 1}`).textContent = 0;
+            timers[playerIndex] = setInterval(() => {
+                times[playerIndex]++;
+                document.getElementById(`time${playerIndex + 1}`).textContent = times[playerIndex];
+                if (times[playerIndex] > 0 && times[playerIndex] % 10 === 0) {
+                    timeouts[playerIndex]++;
+                    document.getElementById(`timeout${playerIndex + 1}`).textContent = timeouts[playerIndex];
+                }
+            }, 1000);
+        }
+
+        function startTimerOnPong(playerIndex) {
+            // 停止其他玩家的计时
+            timers.forEach((timer, index) => {
+                if (index!== playerIndex && timer) {
+                    clearInterval(timer);
+                    timers[index] = null;
+                }
+            });
+            currentPlayer = playerIndex;
+            startTimer(playerIndex);
+        }
+
+        function stopTimer(playerIndex) {
+            if (timers[playerIndex]) {
+                clearInterval(timers[playerIndex]);
+                timers[playerIndex] = null;
+                totalTimes[playerIndex] += times[playerIndex];
+                document.getElementById(`total-time${playerIndex + 1}`).textContent = totalTimes[playerIndex];
+                currentPlayer = (currentPlayer + 1) % 4;
+                startTimer(currentPlayer);
+            }
+        }
+
+        const playersContainer = document.getElementById('players-container');
+        playersContainer.addEventListener('dragstart', (e) => {
+            draggedElement = e.target;
+            setTimeout(() => {
+                e.target.classList.add('dragging');
+            }, 0);
+        });
+
+        playersContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        playersContainer.addEventListener('dragenter', (e) => {
+            if (e.target.classList.contains('player') && e.target!== draggedElement) {
+                const rect = e.target.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                if (e.clientY < midY) {
+                    playersContainer.insertBefore(draggedElement, e.target);
+                } else {
+                    playersContainer.insertBefore(draggedElement, e.target.nextSibling);
+                }
+            }
+        });
+
+        playersContainer.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+        });
+
+        // 游戏开始，玩家 1 先出牌
+        startTimer(0);
+    </script>
+</body>
+
+</html>    
